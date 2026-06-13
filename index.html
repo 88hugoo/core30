@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Core · Reto 30 días</title>
+<meta name="theme-color" content="#0b0b0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Core">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#0a0a0c;
+  --bg-elev:#15151a;
+  --glass:rgba(255,255,255,0.055);
+  --glass-border:rgba(255,255,255,0.09);
+  --text:#f5f5f7;
+  --text-dim:#8e8e96;
+  --text-faint:#5a5a62;
+  --accent:#ff6b4a;
+  --accent-soft:rgba(255,107,74,0.14);
+  --green:#34d399;
+  --red:#ff5c5c;
+  --radius-lg:28px;
+  --radius-md:18px;
+  --radius-sm:12px;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family:-apple-system,"SF Pro Display",Inter,system-ui,sans-serif;
+  background:
+    radial-gradient(circle at 20% -10%, rgba(255,107,74,0.10), transparent 45%),
+    radial-gradient(circle at 100% 30%, rgba(120,120,255,0.06), transparent 50%),
+    var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+  min-height:100vh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.app{
+  max-width:480px;
+  margin:0 auto;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 22px) 20px 100px;
+  position:relative;
+}
+
+/* Top bar */
+.topbar{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:28px;
+}
+.brand{
+  font-size:15px; font-weight:700; letter-spacing:.5px; color:var(--text-dim);
+  display:flex; align-items:center; gap:8px;
+}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent); box-shadow:0 0 12px var(--accent);}
+.clock{
+  font-size:13px; color:var(--text-faint); font-variant-numeric: tabular-nums;
+}
+
+/* Screens */
+.screen{display:none; flex:1; flex-direction:column; animation:fadeIn .45s var(--ease);}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+
+/* HOME */
+.hero{
+  display:flex; flex-direction:column; align-items:center;
+  padding:18px 0 8px;
+}
+.ring-wrap{position:relative; width:240px; height:240px; margin:6px 0 8px;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{stroke:rgba(255,255,255,0.06); fill:none; stroke-width:10;}
+.ring-fg{
+  stroke:var(--accent); fill:none; stroke-width:10; stroke-linecap:round;
+  transition: stroke-dashoffset 1s var(--ease);
+  filter: drop-shadow(0 0 8px rgba(255,107,74,.45));
+}
+.ring-center{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.ring-day-label{font-size:13px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; font-weight:600;}
+.ring-day-num{font-size:64px; font-weight:800; letter-spacing:-2px; line-height:1.05; margin-top:2px;}
+.ring-sub{font-size:13px; color:var(--text-faint); margin-top:4px;}
+
+.stat-row{
+  display:flex; gap:12px; width:100%; margin-top:18px;
+}
+.stat-card{
+  flex:1; background:var(--glass); border:1px solid var(--glass-border);
+  border-radius:var(--radius-md); padding:14px 16px; backdrop-filter:blur(20px);
+}
+.stat-label{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; font-weight:600;}
+.stat-value{font-size:24px; font-weight:800; margin-top:6px; letter-spacing:-.5px; display:flex; align-items:center; gap:6px;}
+.stat-value.flame{color:var(--accent);}
+.stat-value .unit{font-size:13px; color:var(--text-dim); font-weight:600;}
+
+.countdown-card{
+  margin-top:14px; background:var(--glass); border:1px solid var(--glass-border);
+  border-radius:var(--radius-md); padding:16px 18px; backdrop-filter:blur(20px);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.countdown-card.inactive{opacity:.55;}
+.countdown-label{font-size:13px; color:var(--text-dim); font-weight:600;}
+.countdown-sub{font-size:11px; color:var(--text-faint); margin-top:3px;}
+.countdown-time{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.5px;}
+.countdown-time.live{color:var(--green);}
+
+.motivation{
+  text-align:center; font-size:13px; color:var(--text-faint); margin-top:22px; padding:0 10px;
+  font-style:italic; line-height:1.5;
+}
+
+.spacer{flex:1;}
+
+.cta{
+  margin-top:24px;
+  width:100%; padding:18px;
+  background:linear-gradient(135deg, var(--accent), #ff8a5c);
+  color:#1a0c06; border:none; border-radius:var(--radius-md);
+  font-size:17px; font-weight:800; letter-spacing:-.2px;
+  cursor:pointer; transition:transform .15s var(--ease), box-shadow .3s var(--ease);
+  box-shadow:0 8px 30px -8px rgba(255,107,74,0.55);
+}
+.cta:active{transform:scale(.97);}
+.cta.disabled{
+  background:var(--glass); color:var(--text-faint); box-shadow:none; border:1px solid var(--glass-border);
+}
+.cta.done{
+  background:var(--glass); color:var(--green); border:1px solid rgba(52,211,153,.35); box-shadow:none;
+}
+.cta:disabled{cursor:default;}
+
+/* TRAINING */
+.training-head{text-align:center; margin-bottom:6px;}
+.training-day{font-size:13px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; font-weight:600;}
+.training-title{font-size:28px; font-weight:800; margin-top:6px; letter-spacing:-1px;}
+
+.task-list{display:flex; flex-direction:column; gap:12px; margin-top:28px;}
+.task{
+  display:flex; align-items:center; gap:16px;
+  background:var(--glass); border:1px solid var(--glass-border);
+  border-radius:var(--radius-md); padding:18px;
+  backdrop-filter:blur(20px);
+  transition: background .3s var(--ease), border-color .3s var(--ease), transform .15s var(--ease);
+  cursor:pointer; user-select:none;
+}
+.task:active{transform:scale(.985);}
+.task.checked{
+  background:rgba(52,211,153,0.08); border-color:rgba(52,211,153,0.3);
+}
+.checkbox{
+  width:28px; height:28px; border-radius:50%; border:2px solid var(--text-faint);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition: all .25s var(--ease);
+}
+.task.checked .checkbox{
+  background:var(--green); border-color:var(--green);
+}
+.checkbox svg{width:14px; height:14px; opacity:0; transform:scale(.5); transition:all .25s var(--ease);}
+.task.checked .checkbox svg{opacity:1; transform:scale(1);}
+.task-info{flex:1;}
+.task-name{font-size:16px; font-weight:700; letter-spacing:-.2px;}
+.task-target{font-size:13px; color:var(--text-dim); margin-top:2px;}
+.task-icon{font-size:22px; opacity:.85;}
+
+.complete-btn{
+  margin-top:28px; width:100%; padding:18px;
+  background:linear-gradient(135deg, var(--green), #5eead4);
+  color:#04201a; border:none; border-radius:var(--radius-md);
+  font-size:17px; font-weight:800; letter-spacing:-.2px;
+  cursor:pointer; transition: all .25s var(--ease);
+  box-shadow:0 8px 30px -8px rgba(52,211,153,0.55);
+}
+.complete-btn:disabled{
+  background:var(--glass); color:var(--text-faint); box-shadow:none;
+  border:1px solid var(--glass-border); cursor:default;
+}
+
+.timeframe-hint{
+  margin-top:14px; text-align:center; font-size:12px; color:var(--text-faint);
+}
+.timeframe-hint.warn{color:var(--red);}
+
+/* HISTORY */
+.history-head{font-size:28px; font-weight:800; letter-spacing:-1px; margin-bottom:18px;}
+.cal-month{font-size:14px; color:var(--text-dim); font-weight:700; text-align:center; margin-bottom:12px; letter-spacing:.5px;}
+.cal-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:8px;}
+.cal-cell{
+  aspect-ratio:1; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; background:var(--glass); border:1px solid var(--glass-border);
+  color:var(--text-dim); position:relative;
+}
+.cal-cell.done{background:rgba(52,211,153,0.14); border-color:rgba(52,211,153,0.35); color:var(--green);}
+.cal-cell.missed{background:rgba(255,92,92,0.10); border-color:rgba(255,92,92,0.28); color:var(--red);}
+.cal-cell.today{box-shadow:0 0 0 2px var(--accent) inset;}
+.cal-cell.future{color:var(--text-faint); opacity:.4;}
+
+.hist-stats{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:24px;}
+.hist-stat{
+  background:var(--glass); border:1px solid var(--glass-border); border-radius:var(--radius-md);
+  padding:16px; text-align:center;
+}
+.hist-stat .v{font-size:26px; font-weight:800; letter-spacing:-1px;}
+.hist-stat .l{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:4px; font-weight:600;}
+
+/* Tab bar */
+.tabbar{
+  position:fixed; bottom:0; left:0; right:0;
+  display:flex; justify-content:center;
+  padding:0 20px calc(env(safe-area-inset-bottom) + 16px);
+  pointer-events:none;
+}
+.tabbar-inner{
+  pointer-events:auto;
+  max-width:440px; width:100%;
+  display:flex; background:rgba(255,255,255,0.06);
+  border:1px solid var(--glass-border);
+  border-radius:20px; backdrop-filter:blur(30px);
+  padding:6px; box-shadow:0 10px 40px -10px rgba(0,0,0,.6);
+}
+.tab{
+  flex:1; padding:12px; text-align:center; border-radius:14px;
+  font-size:12px; font-weight:700; color:var(--text-faint);
+  cursor:pointer; transition: all .3s var(--ease);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.tab.active{color:var(--text); background:rgba(255,255,255,0.07);}
+.tab .ic{font-size:18px;}
+
+/* Overlays */
+.overlay{
+  position:fixed; inset:0; background:rgba(5,5,8,0.78); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; z-index:100;
+  opacity:0; pointer-events:none; transition:opacity .35s var(--ease);
+  padding:24px;
+}
+.overlay.show{opacity:1; pointer-events:auto;}
+.modal{
+  background:var(--bg-elev); border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg); padding:30px 26px; max-width:360px; width:100%;
+  text-align:center; transform:scale(.92) translateY(10px); transition: transform .4s var(--ease);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.7);
+}
+.overlay.show .modal{transform:scale(1) translateY(0);}
+.modal-icon{font-size:46px; margin-bottom:14px;}
+.modal-title{font-size:20px; font-weight:800; letter-spacing:-.5px; margin-bottom:8px;}
+.modal-text{font-size:14px; color:var(--text-dim); line-height:1.55; margin-bottom:22px;}
+.modal-actions{display:flex; gap:10px;}
+.modal-btn{
+  flex:1; padding:14px; border-radius:14px; border:none; font-size:15px; font-weight:700;
+  cursor:pointer; transition: transform .15s var(--ease);
+}
+.modal-btn:active{transform:scale(.96);}
+.modal-btn.primary{background:var(--accent); color:#1a0c06;}
+.modal-btn.ghost{background:var(--glass); color:var(--text); border:1px solid var(--glass-border);}
+
+/* Streak lost full screen animation */
+.streak-lost{
+  position:fixed; inset:0; background:#0a0a0c; z-index:200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .6s var(--ease);
+  text-align:center; padding:24px;
+}
+.streak-lost.show{opacity:1; pointer-events:auto;}
+.streak-flame{
+  font-size:80px; filter:grayscale(1) opacity(.5);
+  animation: ember 2.2s ease-in-out infinite;
+}
+@keyframes ember{
+  0%,100%{transform:scale(1) translateY(0); opacity:.6;}
+  50%{transform:scale(.92) translateY(-4px); opacity:.35;}
+}
+.streak-lost h2{font-size:24px; font-weight:800; margin:22px 0 8px; letter-spacing:-.5px;}
+.streak-lost p{font-size:14px; color:var(--text-dim); line-height:1.6; max-width:280px;}
+.streak-lost .modal-btn{margin-top:28px; min-width:200px;}
+
+/* Confetti canvas */
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:150;}
+
+/* Toast */
+.toast{
+  position:fixed; top:calc(env(safe-area-inset-top) + 16px); left:50%; transform:translateX(-50%) translateY(-120%);
+  background:rgba(30,30,34,0.92); border:1px solid var(--glass-border); backdrop-filter:blur(20px);
+  padding:13px 20px; border-radius:16px; font-size:13px; font-weight:600; z-index:300;
+  transition: transform .45s var(--ease); max-width:90%; text-align:center; color:var(--text);
+  box-shadow:0 10px 30px -10px rgba(0,0,0,.6);
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.warn{color:var(--red); border-color:rgba(255,92,92,.3);}
+
+::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+<div id="confetti"></div>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> CORE · RETO 30</div>
+    <div class="clock" id="clock">--:--</div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="hero">
+      <div class="ring-wrap">
+        <svg width="240" height="240" viewBox="0 0 240 240">
+          <circle class="ring-bg" cx="120" cy="120" r="106"></circle>
+          <circle class="ring-fg" id="ringFg" cx="120" cy="120" r="106" stroke-dasharray="666" stroke-dashoffset="666"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-day-label">Día</div>
+          <div class="ring-day-num" id="dayNum">1</div>
+          <div class="ring-sub" id="daySub">de 30</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Racha</div>
+        <div class="stat-value flame">🔥 <span id="streakVal">0</span><span class="unit">días</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Progreso</div>
+        <div class="stat-value"><span id="progressVal">0</span><span class="unit">%</span></div>
+      </div>
+    </div>
+
+    <div class="countdown-card" id="countdownCard">
+      <div>
+        <div class="countdown-label" id="countdownLabel">Tiempo restante hoy</div>
+        <div class="countdown-sub" id="countdownSub">Completa el día antes de las 00:00</div>
+      </div>
+      <div class="countdown-time" id="countdownTime">--:--:--</div>
+    </div>
+
+    <div class="motivation" id="motivation">La constancia construye el resultado.</div>
+
+    <div class="spacer"></div>
+
+    <button class="cta" id="startBtn">Empezar entrenamiento</button>
+  </div>
+
+  <!-- TRAINING -->
+  <div class="screen" id="screen-training">
+    <div class="training-head">
+      <div class="training-day">Día <span id="trDayNum">1</span> de 30</div>
+      <div class="training-title">Entrenamiento</div>
+    </div>
+
+    <div class="task-list">
+      <div class="task" data-task="abs">
+        <div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#04201a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="task-info">
+          <div class="task-name">Abdominales</div>
+          <div class="task-target" id="targetAbs">10 reps</div>
+        </div>
+        <div class="task-icon">🔴</div>
+      </div>
+      <div class="task" data-task="scissors">
+        <div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#04201a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="task-info">
+          <div class="task-name">Tijeras</div>
+          <div class="task-target" id="targetScissors">20 reps</div>
+        </div>
+        <div class="task-icon">✂️</div>
+      </div>
+      <div class="task" data-task="plank">
+        <div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#04201a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="task-info">
+          <div class="task-name">Plancha</div>
+          <div class="task-target" id="targetPlank">30 seg</div>
+        </div>
+        <div class="task-icon">🧘</div>
+      </div>
+    </div>
+
+    <button class="complete-btn" id="completeBtn" disabled>Completar día</button>
+    <div class="timeframe-hint" id="timeframeHint">Marca los 3 ejercicios para continuar.</div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen" id="screen-history">
+    <div class="history-head">Historial</div>
+    <div class="cal-month" id="calMonth">Reto · 30 días</div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="hist-stats">
+      <div class="hist-stat"><div class="v" id="histDone">0</div><div class="l">Completados</div></div>
+      <div class="hist-stat"><div class="v" id="histMissed">0</div><div class="l">Perdidos</div></div>
+      <div class="hist-stat"><div class="v" id="histBest">0</div><div class="l">Mejor racha</div></div>
+      <div class="hist-stat"><div class="v" id="histPct">0%</div><div class="l">Constancia</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <div class="tab active" data-screen="home"><span class="ic">🏠</span>Inicio</div>
+    <div class="tab" data-screen="training"><span class="ic">💪</span>Entrenar</div>
+    <div class="tab" data-screen="history"><span class="ic">📅</span>Historial</div>
+  </div>
+</div>
+
+<!-- Confirm reset modal -->
+<div class="overlay" id="overlayConfirm">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">¿Reiniciar el reto?</div>
+    <div class="modal-text">Has perdido tu racha. El reto volverá al Día 1. Esta acción no se puede deshacer.</div>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" id="cancelReset">Cancelar</button>
+      <button class="modal-btn primary" id="confirmReset">Reiniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Streak lost full screen -->
+<div class="streak-lost" id="streakLost">
+  <div class="streak-flame">🔥</div>
+  <h2>Racha perdida</h2>
+  <p>No completaste el entrenamiento de ayer antes de las 00:00. El reto se reinicia desde el Día 1.</p>
+  <button class="modal-btn primary" id="acceptStreakLost">Empezar de nuevo</button>
+</div>
+
+<!-- Day complete celebration -->
+<div class="overlay" id="overlayComplete">
+  <div class="modal">
+    <div class="modal-icon">✅</div>
+    <div class="modal-title" id="completeTitle">Día completado</div>
+    <div class="modal-text" id="completeText">Buen trabajo. La racha sigue creciendo.</div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" id="closeComplete" style="width:100%">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
